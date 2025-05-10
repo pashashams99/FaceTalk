@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>چت تصویری آنلاین</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #000000, #f1c40f); /* ترکیب سیاه و طلایی */
+            padding: 0;
+            margin: 0;
+            direction: rtl;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #background-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('friend-image.jpg'); /* تصویر پس‌زمینه دوستتان */
+            background-size: cover;
+            background-position: center;
+            z-index: -1;
+        }
+
+        /* استایل‌های برای اتاقک */
+        .room-container {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            width: 300px;
+        }
+        .room-container input, .room-container button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: none;
+        }
+        .room-container input {
+            font-size: 16px;
+        }
+        .room-container button {
+            background-color: #f1c40f;
+            color: #000;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .room-container button:hover {
+            background-color: #e67e22;
+        }
+        .room-limit {
+            font-size: 18px;
+            color: white;
+            margin-top: 20px;
+        }
+
+        /* صفحه تماس */
+        .call-container {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 50px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            width: 300px;
+        }
+        .call-container h2 {
+            margin-bottom: 20px;
+        }
+        #language-selector {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        select {
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="background-container"></div> <!-- تصویر پس‌زمینه دوست -->
+
+    <div id="room-container" class="room-container">
+        <h2>ورود به اتاق</h2>
+        <input type="number" id="room-select" placeholder="شماره اتاق را وارد کنید (حداکثر ۵۰۰ نفر)">
+        <button id="join-room">وارد شدن به اتاق</button>
+        <div class="room-limit">
+            محدودیت اتاق: ۵۰۰ نفر
+        </div>
+    </div>
+
+    <div id="call-container" class="call-container" style="display: none;">
+        <h2>در حال تماس...</h2>
+        <p>در حال برقراری ارتباط با دوستانتان...</p>
+    </div>
+
+    <select id="language-selector" onchange="changeLanguage()">
+        <option value="en">English</option>
+        <option value="fa">فارسی</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+        <option value="de">Deutsch</option>
+        <option value="it">Italiano</option>
+        <option value="ja">日本語</option>
+        <option value="zh">中文</option>
+        <option value="ru">Русский</option>
+        <option value="pt">Português</option>
+        <option value="ar">العربية</option>
+    </select>
+
+    <!-- اضافه کردن Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script>
+        // اطلاعات پروژه Supabase
+        const supabaseUrl = 'https://tkyeivcdatrrrgyqjcqt.supabase.co'; // URL پروژه
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRreWVpdmNkYXRycnJneXFqY3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4ODIwMTMsImV4cCI6MjA2MjQ1ODAxM30.yOyIQ1L2Q8WfbI3MOLPN3AbVLp-y_cQNBmfJpUQYVkE'; // API Key
+
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        let currentRoomId = null;
+
+        // شروع تماس وقتی اتاق انتخاب می‌شود
+        document.getElementById('join-room').addEventListener('click', async () => {
+            const roomId = document.getElementById('room-select').value;
+            if (roomId && roomId <= 500) {
+                currentRoomId = roomId;
+
+                // مخفی کردن اتاقک و نمایش صفحه تماس
+                document.getElementById('room-container').style.display = 'none';
+                document.getElementById('call-container').style.display = 'block';
+
+                // ثبت اتاق در پایگاه داده Supabase یا هر منبع مورد نظر برای دسترسی دوست
+                await supabase.from('rooms').insert([{ room_id: roomId, status: 'active' }]);
+
+                alert('شما وارد اتاق با شماره ' + roomId + ' شدید!');
+
+                // انتقال به صفحه جدید با window.open
+                window.open("in-call.html?roomId=" + roomId, "_blank");
+            }
+        });
+
+        // تغییر زبان صفحه
+        function changeLanguage() {
+            const language = document.getElementById('language-selector').value;
+            if (language === 'fa') {
+                document.body.style.direction = 'rtl';
+            } else {
+                document.body.style.direction = 'ltr';
+            }
+        }
+    </script>
+</body>
+</html>
